@@ -14,7 +14,7 @@ class Hashtable:
     size: int = 0
     buckets: list[list[Optional[tuple]]] = field(default_factory=make_10_lists)
 
-    def _hashFunc(self, key: int) -> int:
+    def _hash_function(self, key: int) -> int:
         """Computes a hash for a key-value pair"""
         return key % self.capacity
 
@@ -24,7 +24,7 @@ class Hashtable:
         if key is None:
             key = value.id
 
-        bucket = self.buckets[self._hashFunc(key)]
+        bucket = self.buckets[self._hash_function(key)]
         for idx, (k, _) in enumerate(bucket):
             if k == key:
                 bucket[idx] = (key, value)
@@ -36,7 +36,7 @@ class Hashtable:
     def remove(self, key: int) -> bool:
         """Removes a value from the hash table."""
 
-        idx = self._hashFunc(key)
+        idx = self._hash_function(key)
         bucket = self.buckets[idx]
 
         for idx, (k, v) in enumerate(bucket):
@@ -48,7 +48,7 @@ class Hashtable:
 
     def get(self, key: int) -> Any or None:
         """Obtains a value from the hash table"""
-        for _, (k, v) in enumerate(self.buckets[self._hashFunc(key)]):
+        for _, (k, v) in enumerate(self.buckets[self._hash_function(key)]):
             if k == key:
                 return v
         return None
