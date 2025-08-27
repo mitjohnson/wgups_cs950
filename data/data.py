@@ -26,8 +26,9 @@ def load_distance_data(
         return list(csv.reader(distance_data))
 
 
-def load_data() -> Tuple[Hashtable, Graph]:
-    packages: Hashtable = Hashtable()
+def parse_package_data(hashtable: Hashtable) -> None:
+    """parses raw csv data and inserts it into a hash table."""
+
     for row in load_package_data():
 
         deadline = row.get("Delivery Deadline")
@@ -37,7 +38,7 @@ def load_data() -> Tuple[Hashtable, Graph]:
         elif deadline[-2:].upper() == "AM" or "PM":
             deadline = datetime.strptime(deadline, "%I:%M %p").time()
 
-        packages.insert(
+        hashtable.insert(
             Package(
                 id=int(row.get("Package ID")),
                 address=row.get("Address"),
@@ -50,7 +51,10 @@ def load_data() -> Tuple[Hashtable, Graph]:
             )
         )
 
-    distances: Graph = Graph()
+
+def parse_distance_data(graph: Graph) -> None:
+    """Parses raw csv data and adds to a undirected graph"""
+
     distance_matrix: List[List] = load_distance_data()
     headers: List = distance_matrix[0]
     nodes_length: int = len(headers) - 2
@@ -63,7 +67,7 @@ def load_data() -> Tuple[Hashtable, Graph]:
         if idx == 0:
             continue
         from_node: Node = Node(name.strip(), address.strip())
-        distances.add_node(from_node)
+        graph.add_node(from_node)
 
         for j in range(nodes_length):
             distance_idx: int = j + 2
@@ -77,12 +81,21 @@ def load_data() -> Tuple[Hashtable, Graph]:
 
     # We do not get enough info during parsing to initialize the Edge object.
     for node_one, node_two_name, weight in edges:
-        node_two: Node = distances.get_node(name=node_two_name)
+        node_two: Node = graph.get_node(name=node_two_name)
         if node_one is node_two:
             continue
 
         edge: Edge = Edge(node_two, weight)
-        distances.add_edge(node_one, edge)
+        graph.add_edge(node_one, edge)
 
-    print(distances._adjacenty_list)
+
+def load_data() -> Tuple[Hashtable, Graph]:
+    """Loads and parses package and delivery data"""
+
+    packages: Hashtable = Hashtable()
+    parse_package_data(packages)
+
+    distances: Graph = Graph()
+    parse_distance_data(distances)
+
     return (packages, distances)
