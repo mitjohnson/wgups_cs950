@@ -29,6 +29,7 @@ class Hashtable:
             if k == key:
                 bucket[idx] = (key, value)
                 return True
+
         bucket.append((key, value))
         self.size += 1
         return True
@@ -51,4 +52,9 @@ class Hashtable:
         for _, (k, v) in enumerate(self.buckets[self._hash_function(key)]):
             if k == key:
                 return v
+
         return None
+
+    def values(self):
+        """Returns an immutable collection of all values in the hashtable."""
+        return list(value for bucket in self.buckets for _, value in bucket)
