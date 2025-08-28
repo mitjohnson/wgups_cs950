@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Tuple
 from typing import Dict, List, Optional, Iterable
 
 
@@ -24,15 +23,14 @@ class Edge:
 class Graph:
     """Implementation of an undirected graph"""
 
-    _adjacenty_list: Dict[Tuple[str, str], List[Edge]] = field(
-        default_factory=dict
-    )
+    adjacenty_list: Dict[Node, List[Edge]] = field(default_factory=dict)
 
     def add_node(self, node: Node) -> None:
         """Adds a node (vertex) to the graph"""
+
         if node is not None:
             if self.get_node(node.name, node.address) is None:
-                self._adjacenty_list[node] = []
+                self.adjacenty_list[node] = []
 
     def add_edge(self, node: Node, edge: Edge) -> None:
         """Adds an edge to the graph"""
@@ -40,17 +38,21 @@ class Graph:
         self.add_node(node)
         self.add_node(edge.node)
 
-        self._adjacenty_list[node].append(edge)
+        self.adjacenty_list[node].append(edge)
 
     def nodes(self) -> Iterable[Node]:
-        return list(self._adjacenty_list.keys())
+        return list(self.adjacenty_list.keys())
 
     def get_weight(self, node_one: Node, node_two: Node) -> Optional[Weight]:
         """Return the weight between two nodes"""
 
-        for vertex, weight in self._adjacenty_list.get(node_one):
-            if vertex == node_two:
-                return weight
+        for edge in self.adjacenty_list.get(node_one):
+            if node_two == edge.node:
+                return edge.weight
+        for edge in self.adjacenty_list.get(node_two):
+            if node_one == edge.node:
+                return edge.weight
+
         return None
 
     def get_node(
@@ -69,3 +71,7 @@ class Graph:
             if node.name in search_params or node.address in search_params:
                 return node
         return None
+
+    def get_adjacency_list(self) -> Dict[Node, List[Edge]]:
+        """Get pre-computed adjacency list"""
+        return self.adjacenty_list
