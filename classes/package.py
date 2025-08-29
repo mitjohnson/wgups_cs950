@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import time
+from datetime import datetime
 from typing import Optional
 
 
@@ -11,8 +11,8 @@ class Package:
     state: str
     zip: str
     weight: int
-    delivery_deadline: time
+    delivery_deadline: datetime
     delivery_status: str = 'at the hub'
     special_notes: Optional[str] = None
-    devlivery_time: Optional[time] = None
-    loading_time: Optional[time] = None
+    devlivery_time: Optional[datetime] = None
+    loading_time: Optional[datetime] = None
