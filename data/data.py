@@ -1,10 +1,23 @@
 from classes import Hashtable, Package
+
+import re
 from classes.graph import Graph, Node, Edge, Weight
 
 import csv
 from pathlib import Path
 from datetime import datetime, time
 from typing import List, Tuple
+
+
+def address_normalizer(address: str) -> str:
+    """helper method to Normalize cardinal directions."""
+    if not address:
+        return address
+    address = re.sub(r'\bN\b', 'North', address, flags=re.IGNORECASE)
+    address = re.sub(r'\bS\b', 'South', address, flags=re.IGNORECASE)
+    address = re.sub(r'\bE\b', 'East', address, flags=re.IGNORECASE)
+    address = re.sub(r'\bW\b', 'West', address, flags=re.IGNORECASE)
+    return address
 
 
 def load_package_data(
@@ -30,9 +43,9 @@ def parse_package_data(hashtable: Hashtable) -> None:
     """parses raw csv data and inserts it into a hash table."""
 
     for row in load_package_data():
+        normalized_address = address_normalizer(row.get("Address"))
 
         deadline = row.get("Delivery Deadline")
-
         if deadline.upper() == "EOD":
             deadline = time(hour=17, minute=00)
         elif deadline[-2:].upper() == "AM" or "PM":
@@ -41,7 +54,7 @@ def parse_package_data(hashtable: Hashtable) -> None:
         hashtable.insert(
             Package(
                 id=int(row.get("Package ID")),
-                address=row.get("Address"),
+                address=normalized_address,
                 city=row.get("City"),
                 state=row.get("State"),
                 zip=int(row.get("Zip")),
@@ -62,7 +75,7 @@ def parse_distance_data(graph: Graph) -> None:
     edges: List[Tuple[Node, str, Weight]] = []
     for idx, row in enumerate(distance_matrix):
         name: str = row[0]
-        address: str = row[1]
+        address: str = address_normalizer(row[1])
 
         if idx == 0:
             continue

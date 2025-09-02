@@ -21,6 +21,7 @@ class Truck:
 
         if self.capacity > 0:
             package.delivry_status = "en route"
+            package.loading_time = self.truck_time
             self.contents.append(package)
             self.capacity -= 1
 
@@ -33,12 +34,12 @@ class Truck:
 
         for idx, pkg in enumerate(self.contents):
             if pkg.address == node.address:
+                self.truck_time += travel_time
                 package = self.contents.pop(idx)
-
-        package.delivery_status = "delivered"
-        self.capacity += 1
-
-        return travel_time
+                package.delivery_status = "delivered"
+                package.delivery_time = self.truck_time
+                self.capacity += 1
+                return travel_time
 
     def travel_to_node(self, node: Node, distance: float) -> timedelta:
 

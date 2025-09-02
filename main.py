@@ -8,7 +8,7 @@ from classes import Hashtable, Graph, Node, Truck, Package, SimulationManager
 from dijkstas_sp import shortest_path
 
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 
@@ -19,6 +19,7 @@ class Simulation:
     distances: Graph
     simulation_manager: SimulationManager
     hub: Node
+    leftover_packages: List = field(default_factory=list)
 
     def initialize(
         self,
@@ -41,6 +42,94 @@ class Simulation:
         ]
         print("Trucks have fueled up and are ready for delivery\n")
 
+    def start_delivery(self) -> None:
+        for truck in self.trucks:
+            while len(truck.contents) > 0:
+                shortest_paths = shortest_path(
+                    truck.current_location, self.distances
+                )
+
+                closest_package: Optional[Package] = None
+                closest_distance: float = float("inf")
+                closest_package_node: Optional[Node] = None
+                for package in truck.contents:
+                    destination_node = self.distances.get_node(
+                        address=package.address
+                    )
+
+                    if destination_node in shortest_paths:
+                        distance = shortest_paths[destination_node]
+                        if distance < closest_distance:
+                            closest_distance = distance
+                            closest_package = package
+                            closest_package_node = destination_node
+
+                if closest_package is not None:
+                    travel_time = truck.deliver_package(
+                        closest_package_node, closest_distance
+                    )
+                    truck.current_location = closest_package_node
+                    self.simulation_manager.total_milage += closest_distance
+                    self.simulation_manager.packages_delivered += 1
+                    self.simulation_manager.advance_time(travel_time)
+
+                    if self.simulation_manager.get_current_time() >= datetime(
+                        2025, 8, 24, 10, 30
+                    ):
+                        address_change_package = self.packages.get(9)
+                        if (
+                            address_change_package.address
+                            != "410 South State St"
+                        ):
+                            address_change_package.address = (
+                                "410 South State St"
+                            )
+                            address_change_package.city = "Salt Lake City"
+                            address_change_package.zip_code = "84111"
+                            self.simulation_manager.log_event(
+                                "Package 9 address updated to "
+                                + "410 S State St, Salt Lake City, UT 84111."
+                            )
+
+                    self.simulation_manager.log_event(
+                        f"Truck {truck.id} delivered {closest_package} "
+                        + f"to {closest_package.address}."
+                    )
+
+    def reload_truck(self, truck: Truck, packages: List) -> None:
+        shortest_paths = shortest_path(truck.current_location, self.distances)
+        if self.hub in shortest_paths:
+            distance_to_hub = shortest_paths[self.hub]
+            travel_time = truck.travel_to_node(self.hub, distance_to_hub)
+            truck.current_location = self.hub
+            self.simulation_manager.advance_time(travel_time)
+
+        self.simulation_manager.log_event(
+            f"Truck {truck.id} returned to the hub."
+        )
+        special_cases: Dict = {
+            "delayed": {
+                "09:05": [],
+            },
+            "specific_truck": {
+                2: [3, 18, 36],
+            },
+            "must_be_grouped": [13, 14, 15, 19],
+            "address_change": [],
+        }
+
+        leftover_packages = Truck.load_trucks(
+            [truck],
+            packages,
+            special_cases,
+            self.simulation_manager.get_current_time(),
+        )
+
+        self.leftover_packages = leftover_packages
+        self.simulation_manager.log_event(
+            f"Truck {truck.id} reloaded at the hub."
+        )
+
     def run_simulation(self) -> None:
 
         special_cases: Dict = {
@@ -62,6 +151,7 @@ class Simulation:
             special_cases,
             current_time,
         )
+        self.leftover_packages = leftover_packages
 
         self.simulation_manager.log_event(
             "Trucks finsihed loading."
@@ -70,43 +160,36 @@ class Simulation:
         )
 
         while not self.simulation_manager.is_simulation_over():
-            for truck in self.trucks:
-                if truck.contents:
-                    shortest_paths = shortest_path(
-                        truck.current_location, self.distances
+            self.start_delivery(self)
+
+            if self.leftover_packages:
+                truck_one_to_hub: float = shortest_path(
+                    self.trucks[0].current_location, self.distances
+                )[self.hub]
+                truck_two_to_hub: float = shortest_path(
+                    self.trucks[1].current_location, self.distances
+                )[self.hub]
+
+                if truck_one_to_hub < truck_two_to_hub:
+                    self.reload_truck(
+                        self,
+                        self.trucks[0],
+                        self.leftover_packages,
                     )
+                else:
+                    self.reload_truck(
+                        self,
+                        self.trucks[1],
+                        self.leftover_packages,
+                    )
+                self.start_delivery(self)
 
-                    closest_package: Optional[Package] = None
-                    closest_distance: float = float("inf")
-                    closest_package_node: Optional[Node] = None
-                    for package in truck.contents:
-                        destination_node = self.distances.get_node(
-                            address=package.address
-                        )
-
-                        if destination_node in shortest_paths:
-                            distance = shortest_paths[destination_node]
-                            if distance < closest_distance:
-                                closest_distance = distance
-                                closest_package = package
-                                closest_package_node = destination_node
-
-                    if closest_package is not None:
-                        travel_time = truck.deliver_package(
-                            closest_package_node, closest_distance
-                        )
-                        truck.current_location = closest_package_node
-                        self.simulation_manager.advance_time(travel_time)
-                        self.simulation_manager.log_event(
-                            f"Truck {truck.id} delivered {closest_package} "
-                            + f"to {closest_package.address}."
-                        )
         self.simulation_manager.log_event(
-            f"Finished at {self.simulation_manager.get_current_time}"
+            f"Finished at with a total mileage of {self.simulation_manager.total_milage}",
         )
 
         for event in self.simulation_manager.events:
-            print(f"{event}\n")
+            print(f"{event}\n\n")
 
 
 def main() -> None:

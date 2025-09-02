@@ -7,6 +7,9 @@ class Node:
     name: str
     address: str
 
+    def __lt__(self, other: "Node") -> bool:
+        return (self.name, self.address) < (other.name, other.address)
+
 
 @dataclass
 class Weight:
@@ -23,14 +26,16 @@ class Edge:
 class Graph:
     """Implementation of an undirected graph"""
 
-    adjacenty_list: Dict[Node, List[Edge]] = field(default_factory=dict)
+    adjacenty_list: Dict[Node, Dict[Node, Weight]] = field(
+        default_factory=dict
+    )
 
     def add_node(self, node: Node) -> None:
         """Adds a node (vertex) to the graph"""
 
         if node is not None:
             if self.get_node(node.name, node.address) is None:
-                self.adjacenty_list[node] = []
+                self.adjacenty_list[node] = {}
 
     def add_edge(self, node: Node, edge: Edge) -> None:
         """Adds an edge to the graph"""
@@ -38,7 +43,9 @@ class Graph:
         self.add_node(node)
         self.add_node(edge.node)
 
-        self.adjacenty_list[node].append(edge)
+        if node is not None and edge.node is not None:
+            self.adjacenty_list[node][edge.node] = edge.weight
+            self.adjacenty_list[edge.node][node] = edge.weight
 
     def nodes(self) -> Iterable[Node]:
         return list(self.adjacenty_list.keys())
@@ -46,12 +53,10 @@ class Graph:
     def get_weight(self, node_one: Node, node_two: Node) -> Optional[Weight]:
         """Return the weight between two nodes"""
 
-        for edge in self.adjacenty_list.get(node_one):
-            if node_two == edge.node:
-                return edge.weight
-        for edge in self.adjacenty_list.get(node_two):
-            if node_one == edge.node:
-                return edge.weight
+        if node_two in self.adjacenty_list.get(node_one, {}):
+            return self.adjacenty_list[node_one][node_two]
+        if node_one in self.adjacenty_list.get(node_two, {}):
+            return self.adjacenty_list[node_two][node_one]
 
         return None
 
@@ -72,6 +77,6 @@ class Graph:
                 return node
         return None
 
-    def get_adjacency_list(self) -> Dict[Node, List[Edge]]:
+    def get_adjacency_list(self) -> Dict[Node, Dict[Node, Weight]]:
         """Get pre-computed adjacency list"""
         return self.adjacenty_list

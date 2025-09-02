@@ -1,5 +1,5 @@
 from .hashtable import Hashtable
-from .graph import Graph, Node, Edge
+from .graph import Graph, Weight, Node
 from .package import Package
 from .truck import Truck
 from .simulation_manager import SimulationManager
@@ -7,9 +7,9 @@ from .simulation_manager import SimulationManager
 __all__ = [
     "Hashtable",
     "Graph",
-    "Edge",
-    "Node",
     "Package",
     "Truck",
     "SimulationManager",
+    "Weight",
+    "Node",
 ]
