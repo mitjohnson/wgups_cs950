@@ -19,12 +19,18 @@ class Hashtable:
         return key % self.capacity
 
     def insert(self, value: Any, key: Optional[int] = None) -> bool:
-        """Inserts a value into the hash table"""
+        """
+        Inserts a value into the hash table
+
+        Overall complexity: O(n) - due to collision handling
+        """
 
         if key is None:
             key = value.id
 
         bucket = self.buckets[self._hash_function(key)]
+
+        # O(n)
         for idx, (k, _) in enumerate(bucket):
             if k == key:
                 bucket[idx] = (key, value)
@@ -35,20 +41,30 @@ class Hashtable:
         return True
 
     def remove(self, key: int) -> bool:
-        """Removes a value from the hash table."""
+        """
+        Removes a value from the hash table.
+
+        Overall complexity: O(n) - due to collision handling
+        """
 
         idx = self._hash_function(key)
         bucket = self.buckets[idx]
 
+        # O(n)
         for idx, (k, v) in enumerate(bucket):
-            if k == v:
+            if k == key:
                 bucket.pop(idx)
                 self.size -= 1
                 return True
         return False
 
     def get(self, key: int) -> Any or None:
-        """Obtains a value from the hash table"""
+        """
+        Obtains a value from the hash table
+
+        Overall complexity O(n), but n is expected to be small due to the hash
+        function
+        """
         for _, (k, v) in enumerate(self.buckets[self._hash_function(key)]):
             if k == key:
                 return v

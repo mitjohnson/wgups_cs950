@@ -31,7 +31,11 @@ class Graph:
     )
 
     def add_node(self, node: Node) -> None:
-        """Adds a node (vertex) to the graph"""
+        """
+        Adds a node (vertex) to the graph
+
+        Overall complexity O(V) - due to get_node method
+        """
 
         if node is not None:
             if self.get_node(node.name, node.address) is None:
@@ -63,7 +67,11 @@ class Graph:
     def get_node(
         self, name: Optional[str] = None, address: Optional[str] = None
     ) -> Optional[Node]:
-        """Returns Node object"""
+        """
+        Returns Node object
+
+        # Overall complexity: O(V)
+        """
         search_params: List[str] = []
 
         if name is not None:
@@ -72,6 +80,8 @@ class Graph:
             search_params.append(address)
 
         nodes = self.nodes()
+
+        # O(V) - linear search
         for node in nodes:
             if node.name in search_params or node.address in search_params:
                 return node

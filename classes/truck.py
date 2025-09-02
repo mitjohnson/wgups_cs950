@@ -26,12 +26,17 @@ class Truck:
             self.capacity -= 1
 
     def deliver_package(self, node: Node, distance: float) -> timedelta:
-        """removes a package and reports package id"""
+        """
+        removes a package and reports travel time to a node
+
+        Overall complexity: O(p)
+        """
 
         travel_time = SimulationManager.calculate_travel_time(
             distance, self.speed
         )
 
+        # O(p), where p is the number of packages in the truck
         for idx, pkg in enumerate(self.contents):
             if pkg.address == node.address:
                 self.truck_time += travel_time
@@ -42,6 +47,7 @@ class Truck:
                 return travel_time
 
     def travel_to_node(self, node: Node, distance: float) -> timedelta:
+        """Calculates travel time to a node"""
 
         travel_time = SimulationManager.calculate_travel_time(
             distance, self.speed
