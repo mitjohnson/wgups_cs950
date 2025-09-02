@@ -14,5 +14,5 @@ class Package:
     delivery_deadline: datetime
     delivery_status: str = 'at the hub'
     special_notes: Optional[str] = None
-    devlivery_time: Optional[datetime] = None
+    delivery_time: Optional[datetime] = None
     loading_time: Optional[datetime] = None
