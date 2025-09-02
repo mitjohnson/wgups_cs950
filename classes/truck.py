@@ -73,8 +73,11 @@ class Truck:
         # destruct delayed packages, O(d)
         delayed_ids = []
         for time_str, package_ids in special_cases["delayed"].items():
-            if datetime.strptime(time_str, "%H:%M") > current_time:
-                delayed_ids.extend(package_ids)
+            if (
+                datetime.strptime(time_str, "%H:%M").time()
+                > current_time.time()
+            ):
+                delayed_ids = package_ids
 
         # filter out delayed packages
         # O(n log n) if we have delayed packages, O(1) otherwise.
@@ -111,13 +114,16 @@ class Truck:
                         package.delivery_status = "en route"
                         grouped_packages.remove(package)
 
-            while truck.capacity > 0 and eligible_packages:
+            while truck.capacity > 0 and len(eligible_packages) > 0:
                 package = eligible_packages.pop(0)
                 package.delivery_status = "en route"
                 truck.load_package(package)
 
-        # combine leftover packages into single list, O(g + d) -> O(n)
-        eligible_packages.extend(
-            grouped_packages.extend(delayed_ids or []) or []
-        )
-        return eligible_packages
+        # combine leftover packages into single list, O(n)
+        return [
+            p
+            for p in packages
+            if p.id in delayed_ids
+            or p.id in grouped_packages
+            or p.id in eligible_packages
+        ]

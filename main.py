@@ -19,6 +19,7 @@ class Simulation:
     distances: Graph
     simulation_manager: SimulationManager
     hub: Node
+    special_cases: Dict
     leftover_packages: List = field(default_factory=list)
 
     def initialize(
@@ -36,6 +37,18 @@ class Simulation:
             simulation_end,
         )
 
+        self.special_cases = {
+            "delayed": {
+                "09:05": [6, 25, 28, 32],
+            },
+            "specific_truck": {
+                2: [3, 18, 36],
+            },
+            "must_be_grouped": [13, 14, 15, 19],
+            "address_change": [9],
+        }
+
+
         self.hub = self.distances.get_node(address="HUB")
         self.trucks = [
             Truck(id=x, current_location=self.hub) for x in range(0, 2)
@@ -52,6 +65,7 @@ class Simulation:
                 closest_package: Optional[Package] = None
                 closest_distance: float = float("inf")
                 closest_package_node: Optional[Node] = None
+
                 for package in truck.contents:
                     destination_node = self.distances.get_node(
                         address=package.address
@@ -107,21 +121,11 @@ class Simulation:
         self.simulation_manager.log_event(
             f"Truck {truck.id} returned to the hub."
         )
-        special_cases: Dict = {
-            "delayed": {
-                "09:05": [],
-            },
-            "specific_truck": {
-                2: [3, 18, 36],
-            },
-            "must_be_grouped": [13, 14, 15, 19],
-            "address_change": [],
-        }
 
         leftover_packages = Truck.load_trucks(
             [truck],
-            packages,
-            special_cases,
+            self.leftover_packages,
+            self.special_cases,
             self.simulation_manager.get_current_time(),
         )
 
@@ -132,31 +136,19 @@ class Simulation:
 
     def run_simulation(self) -> None:
 
-        special_cases: Dict = {
-            "delayed": {
-                "09:05": [6, 25, 28, 32],
-            },
-            "specific_truck": {
-                2: [3, 18, 36],
-            },
-            "must_be_grouped": [13, 14, 15, 19],
-            "address_change": [9],
-        }
-
         current_time: datetime = self.simulation_manager.get_current_time()
         package_list = self.packages.values()
-        leftover_packages: List = Truck.load_trucks(
+        self.leftover_packages: List = Truck.load_trucks(
             self.trucks,
             package_list,
-            special_cases,
+            self.special_cases,
             current_time,
         )
-        self.leftover_packages = leftover_packages
 
         self.simulation_manager.log_event(
             "Trucks finsihed loading."
-            + f"Loaded {len(package_list)-len(leftover_packages)} in truck, "
-            + f"left {len(leftover_packages)} at hub.",
+            + f"Loaded {len(package_list)-(len(self.leftover_packages))} in truck, "
+            + f"left {len(self.leftover_packages)} at hub.",
         )
 
         while not self.simulation_manager.is_simulation_over():
@@ -185,7 +177,9 @@ class Simulation:
                 self.start_delivery(self)
 
         self.simulation_manager.log_event(
-            f"Finished at with a total mileage of {self.simulation_manager.total_milage}",
+            f"Finished delivering {self.simulation_manager.packages_delivered}"
+            + " packages with a total mileage of "
+            + str(self.simulation_manager.total_milage),
         )
 
         for event in self.simulation_manager.events:
