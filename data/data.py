@@ -35,6 +35,7 @@ def load_distance_data(
 ) -> List[List]:
     """Loads the CSV file of delivery distances."""
 
+    # O(n) for each row in the CSV
     with open(path, newline="", encoding="utf-8") as distance_data:
         return list(csv.reader(distance_data))
 
@@ -42,6 +43,7 @@ def load_distance_data(
 def parse_package_data(hashtable: Hashtable) -> None:
     """parses raw csv data and inserts it into a hash table."""
 
+    # O(n) for each row in the CSV
     for row in load_package_data():
         normalized_address = address_normalizer(row.get("Address"))
 
@@ -66,49 +68,49 @@ def parse_package_data(hashtable: Hashtable) -> None:
 
 
 def parse_distance_data(graph: Graph) -> None:
-    """Parses raw csv data and adds to a undirected graph"""
+    """
+    Parses raw csv data and adds to a undirected graph
+
+    Overall complexity: O(n^2), due to nested loops
+    """
 
     distance_matrix: List[List] = load_distance_data()
     headers: List = distance_matrix[0]
-    nodes_length: int = len(headers) - 2
 
-    edges: List[Tuple[Node, str, Weight]] = []
-    for idx, row in enumerate(distance_matrix):
+    # O(n) create all nodes first
+    node_map = {}
+    for row in distance_matrix[1:]:
         name: str = row[0]
         address: str = address_normalizer(row[1])
+        node = Node(name.strip(), address.strip())
+        graph.add_node(node)
+        node_map[name.strip()] = node
 
-        if idx == 0:
-            continue
-        from_node: Node = Node(name.strip(), address.strip())
-        graph.add_node(from_node)
-
-        for j in range(nodes_length):
-            distance_idx: int = j + 2
-            to_node_name: str = headers[distance_idx]
-
-            if distance_idx >= len(row):
-                continue
-            if row[distance_idx] and row[distance_idx].strip() is not None:
-                distance_between: Weight = float(row[distance_idx])
-                edges.append((from_node, to_node_name, distance_between))
-
-    # We do not get enough info during parsing to initialize the Edge object.
-    for node_one, node_two_name, weight in edges:
-        node_two: Node = graph.get_node(name=node_two_name)
-        if node_one is node_two:
-            continue
-
-        edge: Edge = Edge(node_two, weight)
-        graph.add_edge(node_one, edge)
+    # O(n^2) add edges
+    for row in distance_matrix[1:]:
+        from_node = node_map[row[0].strip()]
+        for i, distance in enumerate(row[2:], start=2):
+            if distance.strip():
+                to_node_name = headers[i].strip()
+                to_node = node_map[to_node_name]
+                weight = float(distance)
+                edge = Edge(to_node, weight)
+                graph.add_edge(from_node, edge)
 
 
 def load_data() -> Tuple[Hashtable, Graph]:
-    """Loads and parses package and delivery data"""
+    """
+    Loads and parses package and delivery data
+
+    Overall complexity: O(n^2)
+    """
 
     packages: Hashtable = Hashtable()
+    # O(n)
     parse_package_data(packages)
 
     distances: Graph = Graph()
+    # O(n^2)
     parse_distance_data(distances)
 
     return (packages, distances)
