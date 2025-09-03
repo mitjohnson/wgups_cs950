@@ -67,8 +67,15 @@ class Truck:
         Overall complexity: O(n log n), Δ(n).
         """
 
+        eligible_packages = []
+
         # destruct packages that need grouped, O(1).
-        grouped_packages: List = special_cases["must_be_grouped"]
+        grouped_packages: List = [
+            package
+            for package in packages
+            if package.id in special_cases["must_be_grouped"]
+            and package.delivery_status != "delivered"
+        ]
 
         # destruct delayed packages, O(d)
         delayed_ids = []
@@ -79,19 +86,31 @@ class Truck:
             ):
                 delayed_ids = package_ids
 
+        # mark delayed packages, O(d)
+        for package in packages:
+            if package.id in delayed_ids:
+                package.delivery_status = "delayed"
+
         # filter out delayed packages
         # O(n log n) if we have delayed packages, O(1) otherwise.
         if len(delayed_ids) > 0:
-            eligible_packages = sorted(
-                [
-                    package
-                    for package in packages
-                    if package.id not in delayed_ids
-                ],
-                key=lambda package: package.delivery_deadline,
+            eligible_packages.extend(
+                sorted(
+                    [
+                        package
+                        for package in packages
+                        if package.id not in delayed_ids
+                    ],
+                    key=lambda package: package.delivery_deadline,
+                )
             )
         else:
-            eligible_packages = packages
+            eligible_packages.extend(packages)
+
+        # remove grouped packages from eligible packages, O(g * n) -> O(n)
+        for idx, package in enumerate(eligible_packages):
+            if package in grouped_packages:
+                eligible_packages.pop(idx)
 
         # greedily load each truck.
         # prioritizing loading by special cases first, then by deadlines.
@@ -101,18 +120,24 @@ class Truck:
                 needed_in_current_truck: List = special_cases[
                     "specific_truck"
                 ][truck.id]
-                for package in needed_in_current_truck:
-                    if truck.capacity > 0:
+                for package in eligible_packages:
+                    if (
+                        truck.capacity > 0
+                        and package.id in needed_in_current_truck
+                    ):
                         package.delivery_status = "en route"
                         truck.load_package(package)
-                        needed_in_current_truck.remove(package)
-                if len(grouped_packages) > 0 and truck.capacity >= len(
-                    grouped_packages
-                ):
-                    for package in grouped_packages:
-                        truck.load_package(package)
-                        package.delivery_status = "en route"
-                        grouped_packages.remove(package)
+                        eligible_packages.remove(package)
+
+            if len(grouped_packages) > 0 and truck.capacity >= len(
+                grouped_packages
+            ):
+                for package in grouped_packages:
+                    truck.load_package(package)
+                    package.delivery_status = "en route"
+                    grouped_packages.remove(package)
+                    if package in eligible_packages:
+                        eligible_packages.remove(package)
 
             while truck.capacity > 0 and len(eligible_packages) > 0:
                 package = eligible_packages.pop(0)
@@ -123,7 +148,5 @@ class Truck:
         return [
             p
             for p in packages
-            if p.id in delayed_ids
-            or p.id in grouped_packages
-            or p.id in eligible_packages
+            if p.delivery_status == "at hub" or p.delivery_status == "delayed"
         ]

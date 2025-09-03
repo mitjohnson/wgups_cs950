@@ -62,6 +62,7 @@ def parse_package_data(hashtable: Hashtable) -> None:
                 zip=int(row.get("Zip")),
                 weight=int(row.get("Weight KILO")),
                 delivery_deadline=deadline,
+                delivery_status='at hub',
                 special_notes=row.get("Special Notes"),
             )
         )
