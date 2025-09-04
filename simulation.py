@@ -56,7 +56,7 @@ class Simulation:
         """
         runs delivery algorithm for the simulation
 
-        Overall Complexity: O(t * p)
+        Overall Complexity: O(t * p) -> O(n^2)
         """
 
         # O(t)
