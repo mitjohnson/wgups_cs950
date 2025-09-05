@@ -54,6 +54,13 @@ class Truck:
         )
         return travel_time
 
+    def load_multipe_packages(self, packages: List[Package]) -> None:
+        """Load multiple packages into the truck"""
+        for package in packages:
+            if self.capacity > 0:
+                self.load_package(package)
+                package.delivery_status = "en route"
+
     @staticmethod
     def load_trucks(
         trucks: List["Truck"],
@@ -75,6 +82,7 @@ class Truck:
             for package in packages
             if package.id in special_cases["must_be_grouped"]
             and package.delivery_status != "delivered"
+            and package.delivery_status != "en route"
         ]
 
         # destruct delayed packages, O(d)
@@ -100,6 +108,7 @@ class Truck:
                         package
                         for package in packages
                         if package.id not in delayed_ids
+                        and package not in grouped_packages
                     ],
                     key=lambda package: package.delivery_deadline,
                 )
@@ -107,19 +116,15 @@ class Truck:
         else:
             eligible_packages.extend(packages)
 
-        # remove grouped packages from eligible packages, O(g * n) -> O(n)
-        for idx, package in enumerate(eligible_packages):
-            if package in grouped_packages:
-                eligible_packages.pop(idx)
-
         # greedily load each truck.
         # prioritizing loading by special cases first, then by deadlines.
         # O(t + g + n) -> O(n)
         for truck in trucks:
-            if truck.id in special_cases["specific_truck"]:
+            to_remove = []
+            if truck.id + 1 in special_cases["specific_truck"].keys():
                 needed_in_current_truck: List = special_cases[
                     "specific_truck"
-                ][truck.id]
+                ][truck.id + 1]
                 for package in eligible_packages:
                     if (
                         truck.capacity > 0
@@ -127,17 +132,16 @@ class Truck:
                     ):
                         package.delivery_status = "en route"
                         truck.load_package(package)
-                        eligible_packages.remove(package)
+                        to_remove.append(package)
+
+                for package in to_remove:
+                    eligible_packages.remove(package)
 
             if len(grouped_packages) > 0 and truck.capacity >= len(
                 grouped_packages
             ):
-                for package in grouped_packages:
-                    truck.load_package(package)
-                    package.delivery_status = "en route"
-                    grouped_packages.remove(package)
-                    if package in eligible_packages:
-                        eligible_packages.remove(package)
+                truck.load_multipe_packages(grouped_packages)
+                grouped_packages = []
 
             while truck.capacity > 0 and len(eligible_packages) > 0:
                 package = eligible_packages.pop(0)
