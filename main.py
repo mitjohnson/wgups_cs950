@@ -55,7 +55,9 @@ def main(prompt_user: bool) -> None:
                     "Start time must be before end time. Please try again.\n"
                 )
             elif end_time <= time(7, 59):
-                print("End time must be 08:00 AM at a minimum. Please try again.\n")
+                print(
+                    "End time must be 08:00 AM at a minimum. Please try again.\n"
+                )
 
         # convert times to datetimes for simulation
         now = datetime.now()
