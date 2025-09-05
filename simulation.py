@@ -36,7 +36,7 @@ class Simulation:
                 "09:05": [6, 25, 28, 32],
             },
             "specific_truck": {
-                2: [3, 18, 36],
+                2: [3, 18, 36, 38],
             },
             "must_be_grouped": [13, 14, 15, 16, 19, 20],
             "address_change": [9],
