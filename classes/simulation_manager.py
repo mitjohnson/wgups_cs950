@@ -14,7 +14,9 @@ class SimulationManager:
     def advance_time(self, travel_time: timedelta) -> None:
         """Advances global time"""
 
-        if travel_time + self.current_time <= self.simulation_end:
+        if travel_time + self.current_time > self.simulation_end:
+            self.current_time = self.simulation_end
+        else:
             self.current_time += travel_time
 
     def log_event(self, description: str) -> None:

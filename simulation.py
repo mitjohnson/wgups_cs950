@@ -27,8 +27,8 @@ class Simulation:
         self.packages, self.distances = load_data()
 
         self.simulation_manager = SimulationManager(
-            simulation_start,
-            simulation_end,
+            current_time=simulation_start,
+            simulation_end=simulation_end,
         )
 
         self.special_cases = {
@@ -75,6 +75,10 @@ class Simulation:
 
                 # O(p)
                 for package in truck.contents:
+
+                    if self.simulation_manager.is_simulation_over():
+                        continue
+
                     destination_node = self.distances.get_node(
                         address=package.address
                     )
@@ -125,6 +129,9 @@ class Simulation:
 
         Overall Complexity O(n log n)
         """
+
+        if self.simulation_manager.is_simulation_over():
+            return
 
         # O((V+E) log v) dijkstras
         shortest_paths = shortest_path(truck.current_location, self.distances)
@@ -239,9 +246,10 @@ class Simulation:
                         self.trucks[1],
                         self.leftover_packages,
                     )
-                self.log_truck_contents(self)
-                self.log_leftover_packages(self)
-                self.start_delivery(self)
+                if not self.simulation_manager.is_simulation_over():
+                    self.log_truck_contents(self)
+                    self.log_leftover_packages(self)
+                    self.start_delivery(self)
 
         packages_log = "Final package states:\n"
         for pakage in sorted(self.packages.values(), key=lambda x: x.id):
