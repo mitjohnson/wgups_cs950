@@ -115,7 +115,7 @@ class Simulation:
                             )
 
                     self.simulation_manager.log_event(
-                        f"Truck {truck.id} delivered {closest_package} "
+                        f"Truck {truck.id + 1} delivered {closest_package} "
                         + f"to {closest_package.address}."
                     )
 
@@ -135,7 +135,7 @@ class Simulation:
             self.simulation_manager.advance_time(travel_time)
 
         self.simulation_manager.log_event(
-            f"Truck {truck.id} returned to the hub."
+            f"Truck {truck.id + 1} returned to the hub."
         )
 
         # O(n log n)
@@ -148,14 +148,14 @@ class Simulation:
 
         self.leftover_packages = leftover_packages
         self.simulation_manager.log_event(
-            f"Truck {truck.id} reloaded at the hub."
+            f"Truck {truck.id + 1} reloaded at the hub."
         )
 
     def log_truck_contents(self) -> None:
         """Logs the contents of all trucks"""
 
         for truck in self.trucks:
-            log = f"truck {truck.id} contents: \n"
+            log = f"truck {truck.id + 1} contents: \n"
             for package in truck.contents:
                 log += (
                     f"ID: {package.id}, address: {package.address}, "
@@ -239,7 +239,19 @@ class Simulation:
                         self.trucks[1],
                         self.leftover_packages,
                     )
+                self.log_truck_contents(self)
+                self.log_leftover_packages(self)
                 self.start_delivery(self)
+
+        packages_log = "Final package states:\n"
+        for pakage in sorted(self.packages.values(), key=lambda x: x.id):
+            packages_log += (
+                f"ID: {pakage.id}, address: {pakage.address}, "
+                + f"delivery status: {pakage.delivery_status}, "
+                + f"delivery time: {pakage.delivery_time}, "
+                + f"special notes: {pakage.special_notes}\n"
+            )
+        self.simulation_manager.log_event(packages_log)
 
         self.simulation_manager.log_event(
             f"Finished delivering {self.simulation_manager.packages_delivered}"
